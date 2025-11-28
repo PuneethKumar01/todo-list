@@ -5,13 +5,13 @@ const app = new Hono();
 app.get('/', (c) => { return c.text('server is running') });
 
 type Memory = {
-    "id": string,
+    "desc": string,
     "task": string
 }
 
 const memory = new Map<string, Memory>();
 
-memory.set("1", { "id": "1", "task": "sleep" })
+memory.set("1", { "desc": "i am ", "task": "sleep" })
 
 const generateId = (): string => {
     let id = Math.random().toString(36).slice(2)
@@ -34,19 +34,19 @@ app.get('/api/tasks/:id', async (c) => {
 })
 
 app.get('/api/tasks', (c) => {
-    return c.json(Array.from(memory.values()))
+    return c.json(Array.from(memory, (a) => { return { id : a[0], data : a[1]} }))
 })
 
 app.post('/api/tasks', async (c) => {
-    const body = await c.req.json();
+    const body = await c.req.json<Memory>();
     if (!body.task) {
         return c.text("task is required", 400);
     }
     let tempId = generateId()
 
-    memory.set(tempId, { "id": tempId, "task": body.task })
+    memory.set(tempId, { "desc": body.desc, "task": body.task })
 
-    return c.json(memory.get(tempId), 201)
+    return c.json({"id" : tempId, "data" :  memory.get(tempId)}, 201)
 
 })
 
@@ -66,7 +66,7 @@ app.patch('/api/tasks/:id', async (c) => {
 
     if (!memory.has(id)) { return c.text('no such id', 404) }
 
-    memory.set(id, { 'id': id, "task": body.task })
+    memory.set(id, { 'desc': body.desc, "task": body.task })
 
     return c.json(memory.get(id), 201)
 
